@@ -1,0 +1,10 @@
+{
+    "program": "newsletter.aleo",
+    "version": "0.0.0",
+    "description": "",
+    "development": {
+        "private_key": "APrivateKey1zkp5YhYmi67oU8EWKvwkWF82RnVqqbNFRbicraJufz5XJM6",
+        "address": "aleo104dls8lg4k8pmytpymkpylpgc0h5x5mwhsx9lck8jsv56sf8z5xqsx7cgs"
+    },
+    "license": "MIT"
+}

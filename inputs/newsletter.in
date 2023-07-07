@@ -1,0 +1,5 @@
+// The program input for newsletter/src/main.leo
+[main]
+title: field = 1field;
+content: field = 2field;
+secret: field = 3field;
