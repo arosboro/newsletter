@@ -21,6 +21,14 @@ program newsletter.aleo {
         individual_secret: u64,
     }
 
+    record Subscription {
+        owner: address,
+        op: address,
+        id: field,
+        member_sequence: u64,
+        member_secret_idx: field,
+    }
+
     mapping newsletter_member_sequence: field => u64;
     mapping member_secrets: field => SharedSecret;
 
@@ -107,7 +115,7 @@ program newsletter.aleo {
         Mapping::set(newsletter_member_sequence, idx, member_sequence);
     }
 
-    transition accept(newsletter: Newsletter, secret: u64, shared_secret: u64, shared_recipient: u128) -> Newsletter {
+    transition accept(newsletter: Newsletter, secret: u64, shared_secret: u64, shared_recipient: u128) -> (Newsletter, Subscription, Subscription) {
         assert(self.caller == newsletter.owner);
         assert(self.caller != newsletter.op);
         assert(newsletter.base == true);
@@ -115,7 +123,7 @@ program newsletter.aleo {
 
         let member_secret_idx: field = BHP256::hash_to_field(cantors_pairing(newsletter.group_secret, newsletter.member_sequence));
 
-        return Newsletter {
+        return (Newsletter {
             owner: self.caller,
             op: newsletter.op,
             id: newsletter.id,
@@ -127,7 +135,19 @@ program newsletter.aleo {
             content: newsletter.content,
             group_secret: newsletter.group_secret,
             individual_secret: secret,
-        } then finalize (member_secret_idx, shared_secret, shared_recipient);
+        }, Subscription {
+            owner: self.caller,
+            op: newsletter.op,
+            id: newsletter.id,
+            member_sequence: newsletter.member_sequence,
+            member_secret_idx: member_secret_idx,
+        }, Subscription {
+            owner: newsletter.op,
+            op: newsletter.op,
+            id: newsletter.id,
+            member_sequence: newsletter.member_sequence,
+            member_secret_idx: member_secret_idx,
+        }) then finalize (member_secret_idx, shared_secret, shared_recipient);
     }
 
     finalize accept(member_secret_idx: field, shared_secret: u64, shared_recipient: u128) {
@@ -178,13 +198,11 @@ program newsletter.aleo {
         });
     }
 
-    transition unsub(newsletter: Newsletter) -> bool {
-        assert(newsletter.owner == self.caller);
-        assert(newsletter.base == true);
-        assert(newsletter.revision == false);
+    transition unsub(subscription: Subscription) -> bool {
+        assert(subscription.owner == self.caller || subscription.op == self.caller);
 
-        let member_secret_idx: field = BHP256::hash_to_field(cantors_pairing(newsletter.group_secret, newsletter.member_sequence));
-        return newsletter.owner == self.caller && newsletter.op != self.caller then finalize (member_secret_idx);
+        let member_secret_idx: field = subscription.member_secret_idx;
+        return subscription.owner == self.caller then finalize (member_secret_idx);
     }
 
     finalize unsub(member_secret_idx: field) {
