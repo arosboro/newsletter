@@ -1,10 +1,22 @@
 // The 'newsletter' program.
 program newsletter.aleo {
 
-    // The 'Newsletter' struct.
+    struct Bytes160 {
+        b0: u128,
+        b1: u128,
+        b2: u128,
+        b3: u128,
+        b4: u128,
+        b5: u128,
+        b6: u128,
+        b7: u128,
+        b8: u128,
+        b9: u128,
+    }
+
     struct SharedSecret {
-        shared_secret: u64,
-        recipient: u128,
+        shared_secret: Bytes160,
+        recipient: Bytes160,
     }
 
     record Newsletter {
@@ -14,9 +26,9 @@ program newsletter.aleo {
         member_sequence: u64,
         base: bool,
         revision: bool,
-        title: u128,
-        template: u128,
-        content: u128,
+        title: Bytes160,
+        template: Bytes160,
+        content: Bytes160,
         group_secret: u64,
         individual_secret: u64,
     }
@@ -36,7 +48,7 @@ program newsletter.aleo {
         return (((x + y) * (x + y + 1u64)) / 2u64) + y;
     }
 
-    transition main(title: u128, template: u128, content: u128,  group_secret: u64, individual_secret: u64, shared_secret: u64, shared_recipient: u128) -> Newsletter {
+    transition main(title: Bytes160, template: Bytes160, content: Bytes160,  group_secret: u64, individual_secret: u64, shared_secret: Bytes160, shared_recipient: Bytes160) -> Newsletter {
         let idx: field = BHP256::hash_to_field(group_secret);
         let member_sequence: u64 = 1u64;
         let member_secret_idx: field = BHP256::hash_to_field(cantors_pairing(group_secret, member_sequence));
@@ -56,20 +68,32 @@ program newsletter.aleo {
         } then finalize (idx, member_sequence, member_secret_idx, shared_secret, shared_recipient);
     }
 
-    finalize main(idx: field, member_sequence: u64, member_secret_idx: field, shared_secret: u64, shared_recipient: u128) {
+    finalize main(idx: field, member_sequence: u64, member_secret_idx: field, shared_secret: Bytes160, shared_recipient: Bytes160) {
         assert(member_sequence == 1u64);
         let is_init: u64 = Mapping::get_or_use(newsletter_member_sequence, idx, 0u64);
         assert(is_init == 0u64);
         Mapping::set(newsletter_member_sequence, idx, member_sequence);
-        assert(shared_secret != 0u64);
-        assert(shared_recipient != 0u128);
+        let init_bytes160: Bytes160 = Bytes160 {
+            b0: 0u128,
+            b1: 0u128,
+            b2: 0u128,
+            b3: 0u128,
+            b4: 0u128,
+            b5: 0u128,
+            b6: 0u128,
+            b7: 0u128,
+            b8: 0u128,
+            b9: 0u128,
+        };
+        assert(shared_secret != init_bytes160);
+        assert(shared_recipient != init_bytes160);
         let init_shared_secret: SharedSecret = SharedSecret {
-            shared_secret: 0u64,
-            recipient: 0u128,
+            shared_secret: init_bytes160,
+            recipient: init_bytes160,
         };
         let is_init_secret: SharedSecret = Mapping::get_or_use(member_secrets, member_secret_idx, init_shared_secret);
-        assert(is_init_secret.shared_secret == 0u64);
-        assert(is_init_secret.recipient == 0u128);
+        assert(is_init_secret.shared_secret == init_bytes160);
+        assert(is_init_secret.recipient == init_bytes160);
         Mapping::set(member_secrets, member_secret_idx, SharedSecret {
             shared_secret: shared_secret,
             recipient: shared_recipient,
@@ -115,7 +139,7 @@ program newsletter.aleo {
         Mapping::set(newsletter_member_sequence, idx, member_sequence);
     }
 
-    transition accept(newsletter: Newsletter, secret: u64, shared_secret: u64, shared_recipient: u128) -> (Newsletter, Subscription, Subscription) {
+    transition accept(newsletter: Newsletter, secret: u64, shared_secret: Bytes160, shared_recipient: Bytes160) -> (Newsletter, Subscription, Subscription) {
         assert(self.caller == newsletter.owner);
         assert(self.caller != newsletter.op);
         assert(newsletter.base == true);
@@ -150,23 +174,35 @@ program newsletter.aleo {
         }) then finalize (member_secret_idx, shared_secret, shared_recipient);
     }
 
-    finalize accept(member_secret_idx: field, shared_secret: u64, shared_recipient: u128) {
-        assert(shared_secret != 0u64);
-        assert(shared_recipient != 0u128);
+    finalize accept(member_secret_idx: field, shared_secret: Bytes160, shared_recipient: Bytes160) {
+        let init_bytes160: Bytes160 = Bytes160 {
+            b0: 0u128,
+            b1: 0u128,
+            b2: 0u128,
+            b3: 0u128,
+            b4: 0u128,
+            b5: 0u128,
+            b6: 0u128,
+            b7: 0u128,
+            b8: 0u128,
+            b9: 0u128,
+        };
+        assert(shared_secret != init_bytes160);
+        assert(shared_recipient != init_bytes160);
         let init_shared_secret: SharedSecret = SharedSecret {
-            shared_secret: 0u64,
-            recipient: 0u128,
+            shared_secret: init_bytes160,
+            recipient: init_bytes160,
         };
         let is_init: SharedSecret = Mapping::get_or_use(member_secrets, member_secret_idx, init_shared_secret);
-        assert(is_init.shared_secret == 0u64);
-        assert(is_init.recipient == 0u128);
+        assert(is_init.shared_secret == init_bytes160);
+        assert(is_init.recipient == init_bytes160);
         Mapping::set(member_secrets, member_secret_idx, SharedSecret {
             shared_secret: shared_secret,
             recipient: shared_recipient,
         });
     }
 
-    transition deliver(newsletter: Newsletter, title: u128, content: u128, recipient: address) -> (Newsletter, Newsletter) {
+    transition deliver(newsletter: Newsletter, title: Bytes160, content: Bytes160, recipient: address) -> (Newsletter, Newsletter) {
         assert(newsletter.owner == self.caller);
         assert(newsletter.base == true);
         assert(newsletter.revision == false);
@@ -206,16 +242,28 @@ program newsletter.aleo {
     }
 
     finalize unsub(member_secret_idx: field) {
+        let init_bytes160: Bytes160 = Bytes160 {
+            b0: 0u128,
+            b1: 0u128,
+            b2: 0u128,
+            b3: 0u128,
+            b4: 0u128,
+            b5: 0u128,
+            b6: 0u128,
+            b7: 0u128,
+            b8: 0u128,
+            b9: 0u128,
+        };
         let init_shared_secret: SharedSecret = SharedSecret {
-            shared_secret: 0u64,
-            recipient: 0u128,
+            shared_secret: init_bytes160,
+            recipient: init_bytes160,
         };
         let is_init: SharedSecret = Mapping::get_or_use(member_secrets, member_secret_idx, init_shared_secret);
-        assert(is_init.shared_secret != 0u64);
-        assert(is_init.recipient != 0u128);
+        assert(is_init.shared_secret != init_bytes160);
+        assert(is_init.recipient != init_bytes160);
         Mapping::set(member_secrets, member_secret_idx, SharedSecret {
-            shared_secret: 0u64,
-            recipient: 0u128,
+            shared_secret: init_bytes160,
+            recipient: init_bytes160,
         });
     }
 }
