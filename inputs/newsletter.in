@@ -1,7 +1,12 @@
 // The program input for newsletter/src/main.leo
 [main]
-title: u128 = 1u128;
-template: u128 = 2u128;
-content: u128 = 3u128;
-group_secret: u64 = 1u64;
-individual_secret: u64 = 2u64;
+title: Bytes64 = Bytes64 { b0: 1u128, b1: 1u128, b2: 1u128, b3: 1u128 };
+title_nonce: Bytes24 = Bytes24 { b0: 1u8, b1: 2u8, b2: 3u8, b3: 4u8, b4: 5u8, b5: 6u8, b6: 7u8, b7: 8u8, b8: 9u8, b9: 10u8, b10: 11u8, b11: 12u8, b12: 13u8, b13: 14u8, b14: 15u8, b15: 16u8, b16: 17u8, b17: 18u8, b18: 19u8, b19: 20u8, b20: 21u8, b21: 22u8, b22: 23u8, b23: 24u8 };
+template: Bytes64 = Bytes64 { b0: 2u128, b1: 2u128, b2: 2u128, b3: 2u128 };
+template_nonce: Bytes24 = Bytes24 { b0: 25u8, b1: 26u8, b2: 27u8, b3: 28u8, b4: 29u8, b5: 30u8, b6: 31u8, b7: 32u8, b8: 33u8, b9: 34u8, b10: 35u8, b11: 36u8, b12: 37u8, b13: 38u8, b14: 39u8, b15: 40u8, b16: 41u8, b17: 42u8, b18: 43u8, b19: 44u8, b20: 45u8, b21: 46u8, b22: 47u8, b23: 48u8 };
+content: Bytes64 = Bytes64 { b0: 3u128, b1: 3u128, b2: 3u128, b3: 3u128 };
+content_nonce: Bytes24 = Bytes24 { b0: 49u8, b1: 50u8, b2: 51u8, b3: 52u8, b4: 53u8, b5: 54u8, b6: 55u8, b7: 56u8, b8: 57u8, b9: 58u8, b10: 59u8, b11: 60u8, b12: 61u8, b13: 62u8, b14: 63u8, b15: 64u8, b16: 65u8, b17: 66u8, b18: 67u8, b19: 68u8, b20: 69u8, b21: 70u8, b22: 71u8, b23: 72u8 };
+group_symmetric_key: Bytes32 = Bytes32 { b0: 1234567890u128, b1: 1234567890u128 };
+individual_private_key: Bytes32 = Bytes32 { b0: 1234567890u128, b1: 1234567890u128 };
+shared_public_key: Bytes64 = Bytes64 { b0: 1234567890u128, b1: 1234567890u128, b2: 1234567890u128, b3: 1234567890u128 };
+shared_ecipient: Bytes112 = Bytes112 { b0: 1234567890u128, b1: 1234567890u128, b2: 1234567890u128, b3: 1234567890u128, b4: 1234567890u128, b5: 1234567890u128, b6: 1234567890u128 };
