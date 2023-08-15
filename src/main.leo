@@ -1,5 +1,5 @@
 // The 'newsletter' program.
-program newsletter_v0_0_7.aleo {
+program newsletter_v0_0_8.aleo {
 
     struct Bytes24 {
         b0: u8,
@@ -50,7 +50,6 @@ program newsletter_v0_0_7.aleo {
         op: address,
         id: field,
         member_sequence: field,
-        issue_sequence: field,
         base: bool,
         revision: bool,
         title: Bytes64,
@@ -90,7 +89,6 @@ program newsletter_v0_0_7.aleo {
         let idx: field = BHP256::hash_to_field(group_symmetric_key);
         // let member_idx: field = BHP256::hash_to_field(individual_private_key);
         let member_sequence: field = 1field;
-        let issue_sequence: field = 1field;
         let member_secret_idx: field = cantors_pairing(idx, member_sequence);
 
         return Newsletter {
@@ -98,7 +96,6 @@ program newsletter_v0_0_7.aleo {
             op: self.caller,
             id: idx,
             member_sequence,
-            issue_sequence,
             base: true,
             revision: false,
             title,
@@ -114,24 +111,11 @@ program newsletter_v0_0_7.aleo {
 
     finalize main(idx: field, member_sequence: field, member_secret_idx: field, shared_public_key: Bytes64, shared_recipient: Bytes64) {
         assert(member_sequence == 1field);
-        let is_init: field = Mapping::get_or_use(newsletter_member_sequence, idx, 0field);
-        assert(is_init == 0field);
+        assert(shared_public_key.b0 != 0u128 && shared_public_key.b1 != 0u128 && shared_public_key.b2 != 0u128 && shared_public_key.b3 != 0u128);
+        assert(shared_recipient.b0 != 0u128 && shared_recipient.b1 != 0u128 && shared_recipient.b2 != 0u128 && shared_recipient.b3 != 0u128);
+        assert (Mapping::contains(newsletter_member_sequence, idx) == false);
+        assert(Mapping::contains(member_secrets, member_secret_idx) == false);
         Mapping::set(newsletter_member_sequence, idx, member_sequence);
-        let init_bytes64: Bytes64 = Bytes64 {
-            b0: 0u128,
-            b1: 0u128,
-            b2: 0u128,
-            b3: 0u128,
-        };
-        assert(shared_public_key != init_bytes64);
-        assert(shared_recipient != init_bytes64);
-        let init_shared_public_key: SharedSecret = SharedSecret {
-            shared_public_key: init_bytes64,
-            recipient: init_bytes64,
-        };
-        let is_init_secret: SharedSecret = Mapping::get_or_use(member_secrets, member_secret_idx, init_shared_public_key);
-        assert(is_init_secret.shared_public_key == init_bytes64);
-        assert(is_init_secret.recipient == init_bytes64);
         Mapping::set(member_secrets, member_secret_idx, SharedSecret {
             shared_public_key: shared_public_key,
             recipient: shared_recipient,
@@ -141,6 +125,8 @@ program newsletter_v0_0_7.aleo {
     transition invite(newsletter: Newsletter, recipient: address) -> (Newsletter, Newsletter) {
         assert(newsletter.owner == self.caller);
         assert(newsletter.op == self.caller);
+        assert(newsletter.base == true);
+        assert(newsletter.revision == false);
 
         let member_id: field = newsletter.member_sequence + 1field;
         let empty_secret: Bytes64 = Bytes64 {
@@ -155,7 +141,6 @@ program newsletter_v0_0_7.aleo {
             op: newsletter.op,
             id: newsletter.id,
             member_sequence: member_id,
-            issue_sequence: newsletter.issue_sequence,
             base: true,
             revision: false,
             title: newsletter.title,
@@ -171,9 +156,8 @@ program newsletter_v0_0_7.aleo {
             op: newsletter.op,
             id: newsletter.id,
             member_sequence: member_id,
-            issue_sequence: newsletter.issue_sequence,
-            base: true,
-            revision: false,
+            base: !newsletter.base,
+            revision: !newsletter.revision,
             title: newsletter.title,
             title_nonce: newsletter.title_nonce,
             template: newsletter.template,
@@ -186,16 +170,15 @@ program newsletter_v0_0_7.aleo {
     }
 
     finalize invite(idx: field, member_sequence: field) {
-        let is_init: field = Mapping::get_or_use(newsletter_member_sequence, idx, 0field);
-        assert(is_init != 0field);
+        assert(Mapping::contains(newsletter_member_sequence, idx) == false);
         Mapping::set(newsletter_member_sequence, idx, member_sequence);
     }
 
     transition accept(newsletter: Newsletter, secret: Bytes64, shared_public_key: Bytes64, shared_recipient: Bytes64) -> (Newsletter, Subscription, Subscription) {
         assert(self.caller == newsletter.owner);
         assert(self.caller != newsletter.op);
-        assert(newsletter.base == true);
-        assert(newsletter.revision == false);
+        assert(newsletter.base == false);
+        assert(newsletter.revision == true);
 
         let member_secret_idx: field = cantors_pairing(newsletter.id, newsletter.member_sequence);
 
@@ -204,7 +187,6 @@ program newsletter_v0_0_7.aleo {
             op: newsletter.op,
             id: newsletter.id,
             member_sequence: newsletter.member_sequence,
-            issue_sequence: newsletter.issue_sequence,
             base: true,
             revision: false,
             title: newsletter.title,
@@ -231,21 +213,9 @@ program newsletter_v0_0_7.aleo {
     }
 
     finalize accept(member_secret_idx: field, shared_public_key: Bytes64, shared_recipient: Bytes64) {
-        let init_bytes64: Bytes64 = Bytes64 {
-            b0: 0u128,
-            b1: 0u128,
-            b2: 0u128,
-            b3: 0u128,
-        };
-        assert(shared_public_key != init_bytes64);
-        assert(shared_recipient != init_bytes64);
-        let init_shared_public_key: SharedSecret = SharedSecret {
-            shared_public_key: init_bytes64,
-            recipient: init_bytes64,
-        };
-        let is_init: SharedSecret = Mapping::get_or_use(member_secrets, member_secret_idx, init_shared_public_key);
-        assert(is_init.shared_public_key == init_bytes64);
-        assert(is_init.recipient == init_bytes64);
+        assert(shared_public_key.b0 != 0u128 && shared_public_key.b1 != 0u128 && shared_public_key.b2 != 0u128 && shared_public_key.b3 != 0u128);
+        assert(shared_recipient.b0 != 0u128 && shared_recipient.b1 != 0u128 && shared_recipient.b2 != 0u128 && shared_recipient.b3 != 0u128);
+        assert(Mapping::contains(member_secrets, member_secret_idx) == false);
         Mapping::set(member_secrets, member_secret_idx, SharedSecret {
             shared_public_key: shared_public_key,
             recipient: shared_recipient,
@@ -254,18 +224,12 @@ program newsletter_v0_0_7.aleo {
 
     transition deliver(newsletter: Newsletter, title: Bytes64, title_nonce: Bytes24, content: Bytes64, content_nonce: Bytes24, issue_path: Bytes64, issue_nonce: Bytes64) -> Newsletter {
         assert(newsletter.owner == self.caller);
-        assert(newsletter.base == true);
-        assert(newsletter.revision == false);
-
-        let issue_sequence: field = newsletter.issue_sequence + 1field;
-        let issue_idx: field = cantors_pairing(newsletter.id, issue_sequence);
 
         return Newsletter {
             owner: self.caller,
             op: newsletter.op,
             id: newsletter.id,
             member_sequence: newsletter.member_sequence,
-            issue_sequence: issue_sequence,
             base: newsletter.base,
             revision: newsletter.revision,
             title: title,
@@ -276,30 +240,21 @@ program newsletter_v0_0_7.aleo {
             content_nonce: content_nonce,
             group_symmetric_key: newsletter.group_symmetric_key,
             individual_private_key: newsletter.individual_private_key,
-        } then finalize (issue_idx, newsletter.id, issue_sequence, issue_path, issue_nonce);
+        } then finalize (newsletter.id, issue_path, issue_nonce);
     }
 
-    finalize deliver(idx: field, id: field, issue_sequence: field, issue_path: Bytes64, issue_nonce: Bytes64) {
-        let init_bytes64: Bytes64 = Bytes64 {
-            b0: 0u128,
-            b1: 0u128,
-            b2: 0u128,
-            b3: 0u128,
-        };
-        assert(issue_path != init_bytes64);
-        assert(issue_nonce != init_bytes64);
-        let init_shared_issue: SharedIssue = SharedIssue {
-            nonce: init_bytes64,
-            path: init_bytes64,
-        };
-        let shared_issue: SharedIssue = SharedIssue {
+    finalize deliver(id: field, issue_path: Bytes64, issue_nonce: Bytes64) {
+        assert(issue_path.b0 != 0u128 && issue_path.b1 != 0u128 && issue_path.b2 != 0u128 && issue_path.b3 != 0u128);
+        assert(issue_nonce.b0 != 0u128 && issue_nonce.b1 != 0u128 && issue_nonce.b2 != 0u128 && issue_nonce.b3 != 0u128);
+        let x: field = id;
+        let y: field = Mapping::get_or_use(newsletter_issue_sequence, id, 0field);
+        let idx: field = (((x + y) * (x + y + 1field)) / 2field) + y;
+        assert(Mapping::contains(newsletter_issues, idx) == false);
+        Mapping::set(newsletter_issue_sequence, id, y + 1field);
+        Mapping::set(newsletter_issues, idx, SharedIssue {
             nonce: issue_nonce,
             path: issue_path,
-        };
-        let is_init: SharedIssue = Mapping::get_or_use(newsletter_issues, idx, init_shared_issue);
-        assert(is_init == init_shared_issue);
-        Mapping::set(newsletter_issue_sequence, id, issue_sequence);
-        Mapping::set(newsletter_issues, idx, shared_issue);
+        });
     }
 
     transition update(newsletter: Newsletter, title: Bytes64, title_nonce: Bytes24, template: Bytes64, template_nonce: Bytes24, content: Bytes64, content_nonce: Bytes24) -> Newsletter {
@@ -312,7 +267,6 @@ program newsletter_v0_0_7.aleo {
             op: newsletter.op,
             id: newsletter.id,
             member_sequence: newsletter.member_sequence,
-            issue_sequence: newsletter.issue_sequence,
             base: newsletter.base,
             revision: newsletter.revision,
             title,
@@ -335,22 +289,7 @@ program newsletter_v0_0_7.aleo {
     }
 
     finalize unsub(member_secret_idx: field) {
-        let init_bytes64: Bytes64 = Bytes64 {
-            b0: 0u128,
-            b1: 0u128,
-            b2: 0u128,
-            b3: 0u128,
-        };
-        let init_shared_public_key: SharedSecret = SharedSecret {
-            shared_public_key: init_bytes64,
-            recipient: init_bytes64,
-        };
-        let is_init: SharedSecret = Mapping::get_or_use(member_secrets, member_secret_idx, init_shared_public_key);
-        assert(is_init.shared_public_key != init_bytes64);
-        assert(is_init.recipient != init_bytes64);
-        Mapping::set(member_secrets, member_secret_idx, SharedSecret {
-            shared_public_key: init_bytes64,
-            recipient: init_bytes64,
-        });
+        assert(Mapping::contains(member_secrets, member_secret_idx) == true);
+        Mapping::remove(member_secrets, member_secret_idx);
     }
 }

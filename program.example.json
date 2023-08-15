@@ -1,6 +1,6 @@
 {
-  "program": "newsletter.aleo",
-  "version": "0.0.5",
+  "program": "newsletter_v0_0_8.aleo",
+  "version": "0.0.8",
   "description": "",
   "development": {
     "private_key": "APrivateKey1zkp5YhYmi67oU8EWKvwkWF82RnVqqbNFRbicraJufz5XJM6",
