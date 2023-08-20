@@ -1,6 +1,6 @@
 # newsletter_v0_1_0.aleo
 
-Introducing Cipher Page, an off-chain encryption-based communication platform. I believe this work holds value within the Aleo Ecosystem, as it aims to raise awareness about privacy and enables users to embrace zero-knowledge concepts without the need to comprehend the intricate technical details. Instead, users can interact through a wallet and user interface. The frontend incorporates multiple examples, licensed under the copy-left (GPL) license, which any user can utilize as a foundation for building a React frontend. Additionally, the Aleo contract itself introduces novel concepts for implementing both public and private aspects of the application logic using mappings.
+Introducing Cipher Page, an encryption-based communication platform.  Encryption keys are managed on-chain, while larger data, including ciphertext is meant to be aliased to Interplanetary Filesystem (IPFS). I believe this work holds value within the Aleo Ecosystem, as it aims to raise awareness about privacy and enables users to embrace zero-knowledge concepts without the need to comprehend the intricate technical details. Instead, users can interact through a wallet and user interface. The frontend incorporates multiple examples, licensed under the copy-left (GPL) license, which any user can utilize as a foundation for building a React frontend. Additionally, the Aleo contract itself introduces novel concepts for implementing both public and private aspects of the application logic using mappings.
 
 ## Build Guide
 
