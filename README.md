@@ -1,5 +1,7 @@
 # newsletter_v0_1_0.aleo
 
+Introducing Cipher Page, an off-chain encryption-based communication platform. I believe this work holds value within the Aleo Ecosystem, as it aims to raise awareness about privacy and enables users to embrace zero-knowledge concepts without the need to comprehend the intricate technical details. Instead, users can interact through a wallet and user interface. The frontend incorporates multiple examples, licensed under the copy-left (GPL) license, which any user can utilize as a foundation for building a React frontend. Additionally, the Aleo contract itself introduces novel concepts for implementing both public and private aspects of the application logic using mappings.
+
 ## Build Guide
 
 Copy program.example.json to program.json and fill in the values you wish to change.
@@ -11,6 +13,8 @@ To test this Aleo program, run:
 ```bash
 make test
 ```
+
+This Makefile contains example commands for testing each transition.  The program has a frontend at https://github.com/arosboro/newsletter-fe.  While it is difficult to operate from the command line, it is recommended to use the frontend either locally or hosted at https://cipher.page to interact with the deployed `newsletter_v0_1_0.aleo` contract.
 
 # Newsletter Frontend
 
