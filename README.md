@@ -1,6 +1,6 @@
 # newsletter_v0_1_0.aleo
 
-Introducing Cipher Page, an encryption-based communication platform.  Encryption keys are managed on-chain, while larger data, including ciphertext is meant to be aliased to Interplanetary Filesystem (IPFS). I believe this work holds value within the Aleo Ecosystem, as it aims to raise awareness about privacy and enables users to embrace zero-knowledge concepts without the need to comprehend the intricate technical details. Instead, users can interact through a wallet and user interface. The frontend incorporates multiple examples, licensed under the copy-left (GPL) license, which any user can utilize as a foundation for building a React frontend. Additionally, the Aleo contract itself introduces novel concepts for implementing both public and private aspects of the application logic using mappings.
+Introducing Cipher Page, an encryption-based communication platform. Encryption keys are managed on-chain, while larger data, including ciphertext is meant to be aliased to Interplanetary Filesystem (IPFS). I believe this work holds value within the Aleo Ecosystem, as it aims to raise awareness about privacy and enables users to embrace zero-knowledge concepts without the need to comprehend the intricate technical details. Instead, users can interact through a wallet and user interface. The frontend incorporates multiple examples, licensed under the copy-left (GPL) license, which any user can utilize as a foundation for building a React frontend. Additionally, the Aleo contract itself introduces novel concepts for implementing both public and private aspects of the application logic using mappings.
 
 ## Build Guide
 
@@ -14,7 +14,7 @@ To test this Aleo program, run:
 make test
 ```
 
-This Makefile contains example commands for testing each transition.  The program has a frontend at https://github.com/arosboro/newsletter-fe.  While it is difficult to operate from the command line, it is recommended to use the frontend either locally or hosted at https://cipher.page to interact with the deployed `newsletter_v0_1_0.aleo` contract.
+This Makefile contains example commands for testing each transition. The program has a frontend at https://github.com/arosboro/newsletter-fe. While it is difficult to operate from the command line, it is recommended to use the frontend either locally or hosted at https://cipher.page to interact with the deployed `newsletter_v0_1_0.aleo` contract.
 
 # Newsletter Frontend
 
@@ -68,7 +68,7 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 - `newsletter_member_sequence`: (Field => Field) The newsletter id is indexed to determine how many members have been invited to the newsletter group.
 - `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of each member is mapped to Shared Public Key and Public Address
 - `newsletter_issue_sequence`: (Field => Field) Each time a member delivers an issue the sequence increments with respect to the key: newsleter.id.
-- `newsletter_issues`: (Field => SharedIssue) Cantor's pairing with each  and  is used to capture the path to each digest and nonce of every encrypted field for all subscribers.
+- `newsletter_issues`: (Field => SharedIssue) Cantor's pairing with each and is used to capture the path to each digest and nonce of every encrypted field for all subscribers.
 
 ## Transitions
 
@@ -87,12 +87,30 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 - `shared_public_key`: Bytes64 the key that other people can use to send messages.
 - `shared_recipient`: Bytes64 the address for other transitions and messages.
 
+**Outputs:**
+
+- `Newsletter`: Newsletter the record you created.
+
+**Finalize:**
+
+- `newsletter_member_sequence`: (Field => Field) The newsletter id is indexed to a default of 1field.
+- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the first member is mapped to `shared_public_key` and `shared_recipient` of SharedSecret.
+
 ### invite
 
 **Inputs:**
 
 - `newsletter`: Newsletter the record indicating you can invite members to this group.
 - `recipient`: address the user's address you want to send an invite to.
+
+**Outputs:**
+
+- `Newsletter`: Newsletter the record you created minted back to you to maintain your group key and private key.
+- `Newsletter`: Newsletter the record sent to the recipient.
+
+**Finalize:**
+
+- `newsletter_member_sequence`: (Field => Field) The newsletter id is indexed to the next member sequence.
 
 ### accept
 
@@ -102,6 +120,16 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 - `secret`: Bytes64 your private key.
 - `shared_public_key`: Bytes64 the public key to match your secret.
 - `shared_recipient`: Bytes64 the address you signed up with.
+
+**Outputs:**
+
+- `Newsletter`: Newsletter the record you accepted minted back to you to maintain your group key and private key.
+- `Subscription`: Subscription the record for the operator to identify a subscriber.
+- `Subscription`: Subscription the record for the subscriber to manage their subscription.
+
+**Finalize:**
+
+- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the accepting member is mapped to `shared_public_key` and `shared_recipient` of SharedSecret.
 
 ### deliver
 
@@ -115,6 +143,15 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 - `issue_path`: Bytes64 The IPFS path of the digests for every member receiving an issue.
 - `issue_nonce`: Bytes64 The U8IntArray of the nonce using Group Symmetric key which encrypted issue path's contents.
 
+**Outputs:**
+
+- `Newsletter`: Newsletter the record you used to manage your issue delivery.
+
+**Finalize:**
+
+- `newsletter_issue_sequence`: (Field => Field) The newsletter id is indexed to the next issue sequence.
+- `newsletter_issues`: (Field => SharedIssue) The cantor's pairing of issue sequence of the accepting member is mapped to `issue_path` and `issue_nonce` of SharedIssue. The resource at `issue_path` is encrypted using the Group Symmetric Key and `issue_nonce`.
+
 ### update
 
 **Inputs:**
@@ -127,11 +164,25 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 - `content`: Bytes64 the IPFS path to the content you updated.
 - `content_nonce`: Bytes24 the U8IntArray of the nonce you used.
 
+**Outputs:**
+
+- `Newsletter`: Newsletter the record you provided new content for.
+
 ### unsub
 
 **Inputs:**
 
 - `subscription`: The subscription you wish to unsubscribe from.
+
+**Outputs:**
+
+- `bool` true if the subscription was removed.
+
+**Finalize:**
+
+- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the accepting member is removed.
+
+* Note: Unsubscribing leaves past content visible to the user in read only mode.
 
 ## Helper Functions
 
