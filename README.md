@@ -16,20 +16,6 @@ make test
 
 This Makefile contains example commands for testing each transition. The program has a frontend at https://github.com/arosboro/newsletter-fe. While it is difficult to operate from the command line, it is recommended to use the frontend either locally or hosted at https://cipher.page to interact with the deployed `newsletter_v0_1_0.aleo` contract.
 
-# Newsletter Frontend
-
-A frontend to handle asymmetric and symmetric key management between disparate parties. Users can create groups with the `newsletter_v0_1_0.aleo` contract and invite members to deliver issues (new content). Newsletters contain contents and template structure which is a loose representation of content. Privacy mode can be toggled on or off to show the cipher text of any given input.
-
-## Project Frameworks
-
-- Vite
-- React
-- Redux Toolkit
-- @DemoxLabs Aleo Wallet Adapter
-- Vitest
-- Vite Plugin WASM Pack (leveraging snarkvm-wasm)
-- Aleo
-
 ## Structs
 
 - `Bytes24`: This struct contains 24 `u8` values that convert to 1 byte each. The entire value is frequently utilized as a BigInt nonce, for example.
@@ -42,7 +28,7 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 
 - `owner`: This is the record holder
 - `op`: This is the record instantiating address
-- `id`: This is a unique field value based on a BHP 256 `hash_to_field` algorithm running on the `op`
+- `id`: This is a unique field value based on a BHP 256 `hash_to_field` algorithm running on the `group_symmetric_key`
 - `member_sequence`: The op chooses members to invite, and each time increments the member sequence so the number of members invited is reflected by this field value.
 - `base`: Whether or not the record owner is the op. Base indicates it's an owned record not a derivative record (Meaning it's not being used to deliver as an accepted subscriber, but rather the Newsletter creator holds the record).
 - `revision`: True when the record has been received through an invitation but not initially created by the record holder.
@@ -59,16 +45,16 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 
 - `owner`: The owner either `op` or the subscriber
 - `op`: The manager of the group.
-- `id`: This is a unique field value based on a BHP 256 `hash_to_field` algorithm running on the `op`
+- `id`: This is a unique field value based on a BHP 256 `hash_to_field` algorithm running on the `group_symmetric_key`. It serves to tie newsletters to subscriptions.
 - `member_sequence`: This field value pertains to the sequence the member used with the cantor's pairing function in the mapping assignment.
-- `member_secret_idx`: This field value identifies the combination of the id and member sequence provided by cantor's pairing function.
+- `member_secret_idx`: This field value identifies the combination of the id and member sequence provided by cantor's pairing function. It is the mapping key for the `member_secrets` mapping.
 
 ## Mappings
 
 - `newsletter_member_sequence`: (Field => Field) The newsletter id is indexed to determine how many members have been invited to the newsletter group.
 - `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of each member is mapped to Shared Public Key and Public Address
-- `newsletter_issue_sequence`: (Field => Field) Each time a member delivers an issue the sequence increments with respect to the key: newsleter.id.
-- `newsletter_issues`: (Field => SharedIssue) Cantor's pairing with each and is used to capture the path to each digest and nonce of every encrypted field for all subscribers.
+- `newsletter_issue_sequence`: (Field => Field) Each time a member delivers an issue the sequence increments with respect to the key: `newsleter.id`.
+- `newsletter_issues`: (Field => SharedIssue) Cantor's pairing with each `Newsletter.id` and associated `newsletter_issue_sequence` and is used to capture the path to each digest and nonce of every encrypted field for all subscribers.
 
 ## Transitions
 
@@ -94,7 +80,7 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 **Finalize:**
 
 - `newsletter_member_sequence`: (Field => Field) The newsletter id is indexed to a default of 1field.
-- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the first member is mapped to `shared_public_key` and `shared_recipient` of SharedSecret.
+- `member_secrets`: (Field => SharedSecret) The cantor's pairing of `Newsletter.id` and `member_sequence` of the first member is mapped to a `SharedSecret` struct containing `shared_public_key` and `shared_recipient`.
 
 ### invite
 
@@ -129,7 +115,7 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 
 **Finalize:**
 
-- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the accepting member is mapped to `shared_public_key` and `shared_recipient` of SharedSecret.
+- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the accepting member is mapped to a `SharedSecret` struct containing `shared_public_key` and `shared_recipient`.
 
 ### deliver
 
@@ -141,7 +127,7 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 - `content`: Bytes64 the IPFS path to the content you updated.
 - `content_nonce`: Bytes24 the U8IntArray of the nonce you used.
 - `issue_path`: Bytes64 The IPFS path of the digests for every member receiving an issue.
-- `issue_nonce`: Bytes64 The U8IntArray of the nonce using Group Symmetric key which encrypted issue path's contents.
+- `issue_nonce`: Bytes64 The U8IntArray representation converted to bytes of the nonce using Group Symmetric key which encrypted issue path's contents.
 
 **Outputs:**
 
@@ -180,11 +166,11 @@ A frontend to handle asymmetric and symmetric key management between disparate p
 
 **Finalize:**
 
-- `member_secrets`: (Field => SharedSecret) The cantor's pairing of member sequence of the accepting member is removed.
+- `member_secrets`: (Field => SharedSecret) The cantor's pairing of `Newsletter.id` and `member_sequence` of the accepting member is removed (The `Subscription.member_secret_idx` value is used).
 
 * Note: Unsubscribing leaves past content visible to the user in read only mode.
 
 ## Helper Functions
 
-- `cantors_pairing`: Map two field values to a field value which will not intersect if there is sufficient entropy when choosing `path`.
+- `cantors_pairing`: Map two field values to a field value which will not intersect if there is sufficient entropy when choosing `Newsletter.group_symetric_key`, this will result in a unique value for each newsletter id and member sequence combination.
 - `is_empty_bytes64`: Determine if a Bytes64 struct contains only `0u128` values for `b0`, `b1`, `b2`, `b3`. Return `bool`.
